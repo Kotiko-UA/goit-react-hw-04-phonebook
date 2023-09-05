@@ -1,54 +1,60 @@
-import { Component } from 'react';
+import { useEffect, useState } from 'react';
 import { Contacts } from '../Contacts/Contacts';
 import { FormPhoneBook } from '../Form/Form';
 import { nanoid } from 'nanoid';
 import { FindContacts } from '../FindContacts/FindContacts';
 import { Notify } from 'notiflix/build/notiflix-notify-aio';
 import { PageWrapper } from './App.styled';
-export class App extends Component {
-  state = {
-    contacts: [],
-    filter: '',
-  };
 
-  onSubmit = ({ name, number }) => {
-    this.setState(prevState => {
-      if (prevState.contacts.find(contact => contact.name === name)) {
-        Notify.failure(`${name} is alredy in contacts`);
-        return;
-      }
+const initialContacts = () => {
+  const sevedUsers = localStorage.getItem('users');
+  if (sevedUsers !== null) {
+    return JSON.parse(sevedUsers);
+  } else {
+    return [];
+  }
+};
 
-      const newContact = { name, number, id: nanoid() };
-      return {
-        contacts: [...prevState.contacts, newContact],
-      };
+export const App = () => {
+  const [contacts, setContacts] = useState(initialContacts);
+  const [filter, setFilter] = useState('');
+
+  const onSubmit = ({ name, number }) => {
+    if (contacts.find(contact => contact.name === name)) {
+      Notify.failure(`${name} is alredy in contacts`);
+      return;
+    }
+    const newContact = { name, number, id: nanoid() };
+    setContacts(prevState => {
+      return [...prevState, newContact];
     });
   };
-  onDelete = delEl => {
-    this.setState(prevState => ({
-      contacts: prevState.contacts.filter(contact => contact.id !== delEl),
-    }));
+
+  const onDelete = delEl => {
+    setContacts(contacts.filter(contact => contact.id !== delEl));
   };
-  onFindUser = ({ target: { value } }) => {
-    this.setState({ filter: value });
+  const onFindUser = ({ target: { value } }) => {
+    setFilter(value);
   };
 
-  render() {
-    const filterNumbers = this.state.contacts.filter(user =>
-      user.name.toLowerCase().includes(this.state.filter.toLowerCase())
-    );
-    return (
-      <PageWrapper>
-        <h1>Phonebook</h1>
-        <FormPhoneBook onSubmit={this.onSubmit} />
-        <h2>Contacts</h2>
-        <FindContacts onFindUser={this.onFindUser} />
-        <Contacts
-          onDelete={this.onDelete}
-          users={filterNumbers}
-          onFindUser={this.onFindUser}
-        />
-      </PageWrapper>
-    );
-  }
-}
+  useEffect(() => {
+    localStorage.setItem('users', JSON.stringify(contacts));
+  }, [contacts]);
+
+  const filterNumbers = contacts.filter(user =>
+    user.name.toLowerCase().includes(filter.toLowerCase())
+  );
+  return (
+    <PageWrapper>
+      <h1>Phonebook</h1>
+      <FormPhoneBook onSubmit={onSubmit} />
+      <h2>Contacts</h2>
+      <FindContacts onFindUser={onFindUser} />
+      <Contacts
+        onDelete={onDelete}
+        users={filterNumbers}
+        onFindUser={onFindUser}
+      />
+    </PageWrapper>
+  );
+};
