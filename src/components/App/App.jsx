@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Contacts } from '../Contacts/Contacts';
 import { FormPhoneBook } from '../Form/Form';
 import { nanoid } from 'nanoid';
@@ -36,14 +36,16 @@ export const App = () => {
   const onFindUser = ({ target: { value } }) => {
     setFilter(value);
   };
+  const filterNumbers = useMemo(() => {
+    return contacts.filter(user =>
+      user.name.toLowerCase().includes(filter.toLowerCase())
+    );
+  }, [contacts, filter]);
 
   useEffect(() => {
     localStorage.setItem('users', JSON.stringify(contacts));
   }, [contacts]);
 
-  const filterNumbers = contacts.filter(user =>
-    user.name.toLowerCase().includes(filter.toLowerCase())
-  );
   return (
     <PageWrapper>
       <h1>Phonebook</h1>
